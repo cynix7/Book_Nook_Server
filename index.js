@@ -16,11 +16,24 @@ export async function connectToMongoDB() {
     console.dir(err);
   }
 }
- connectToMongoDB();
+ const mongoClient = await connectToMongoDB();
+ const db = mongoClient.db('book-nook');
+ const booksCollection = db.collection('books');
 
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
+});
+ 
+app.post("/add-book", async (req, res) => {
+  try {
+    const newBook = req.body;
+    const result = await booksCollection.insertOne(newBook);
+    res.status(201).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add book' });
+  }
 });
 
 app.listen(PORT, () => {

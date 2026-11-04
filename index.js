@@ -1,8 +1,11 @@
 import express from 'express';
 import { MongoClient } from 'mongodb';
+import cors from 'cors';
 import 'dotenv/config'
   
 const app = express();
+app.use(cors());
+app.use(express.json());
 const PORT = process.env.PORT || 8000;
 
 const client = new MongoClient(process.env.MONGODB_URI);
@@ -24,7 +27,17 @@ export async function connectToMongoDB() {
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
- 
+
+app.get("/new-arrivals", async (req, res) => {
+  try {
+    const newArrivals = await booksCollection.find().sort({ _id: -1 }).limit(6).toArray();
+    res.json(newArrivals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch new arrivals' });
+  }
+});
+
 app.post("/add-book", async (req, res) => {
   try {
     const newBook = req.body;

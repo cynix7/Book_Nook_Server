@@ -2,6 +2,7 @@ import express from 'express';
 import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
 import 'dotenv/config'
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const app = express();
 app.use(cors());
@@ -30,6 +31,21 @@ await borrowedBooksCollection.createIndex(
   { unique: true }
 );
 
+const verifyToken=async(req,res,next)=>{
+const authHeader=req.headers.authorization;
+if(!authHeader){
+  return res.status(401).send({msg:"Unauthorized"})
+}
+const token=authHeader.split(" ")[1];
+const jwks= createRemoteJWKSet(new URL('http://localhost:3000/api/auth/jwks'))
+try{
+  const {payload}=await jwtVerify(token,jwks);
+  next();
+}catch(error){
+return res.status(500).send({msg:"Server Error!"})
+}
+}
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
@@ -54,7 +70,7 @@ app.get("/new-arrivals", async (req, res) => {
   }
 });
 
-app.get("/book/:id", async (req, res) => {
+app.get("/book/:id",verifyToken, async (req, res) => {
   try {
     const bookId = req.params.id;
     const book = await booksCollection.findOne({ _id: new ObjectId(bookId) });
@@ -68,7 +84,7 @@ app.get("/book/:id", async (req, res) => {
   }
 });
 
-app.get("/my-books", async (req, res) => {
+app.get("/my-books",verifyToken, async (req, res) => {
   try {
     const email = req.query.email;
 
@@ -82,7 +98,7 @@ app.get("/my-books", async (req, res) => {
   }
 });
 
-app.get("/my-borrows", async (req, res) => {
+app.get("/my-borrows",verifyToken, async (req, res) => {
   try {
     const email = req.query.email;
 
@@ -96,7 +112,7 @@ app.get("/my-borrows", async (req, res) => {
   }
 });
 
-app.post("/add-book", async (req, res) => {
+app.post("/add-book",verifyToken, async (req, res) => {
   try {
     const newBook = {
       ...req.body,
@@ -120,7 +136,7 @@ app.post("/add-book", async (req, res) => {
   }
 });
 
-app.post("/borrow-book", async (req, res) => {
+app.post("/borrow-book",verifyToken, async (req, res) => {
   try {
     const borrowedBook = req.body;
     const { bookId, userEmail } = borrowedBook;
@@ -192,7 +208,7 @@ app.post("/borrow-book", async (req, res) => {
   }
 });
 
-app.patch("/update-book/:id", async (req, res) => {
+app.patch("/update-book/:id",verifyToken, async (req, res) => {
   try {
     const bookId = req.params.id;
     const updatedBook = { ...req.body };
@@ -216,7 +232,7 @@ app.patch("/update-book/:id", async (req, res) => {
   }
 });
 
-app.delete("/delete-book/:id", async (req, res) => {
+app.delete("/delete-book/:id",verifyToken, async (req, res) => {
   try {
     const bookId = req.params.id;
     const result = await booksCollection.deleteOne({ _id: new ObjectId(bookId) });
@@ -230,7 +246,7 @@ app.delete("/delete-book/:id", async (req, res) => {
   }
 });
 
-app.delete("/return-book/:id", async (req, res) => {
+app.delete("/return-book/:id",verifyToken, async (req, res) => {
   try {
     const borrowId = req.params.id;
 

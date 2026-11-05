@@ -48,6 +48,20 @@ app.get("/new-arrivals", async (req, res) => {
   }
 });
 
+app.get("/book/:id", async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    const book = await booksCollection.findOne({ _id: bookId });
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    res.json(book);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch book' });
+  }
+});
+
 app.post("/add-book", async (req, res) => {
   try {
     const newBook = req.body;

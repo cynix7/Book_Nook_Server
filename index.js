@@ -28,6 +28,16 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+app.get("/all-books", async (req, res) => {
+  try {
+    const allBooks = await booksCollection.find().toArray();
+    res.json(allBooks);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch all books' });
+  }
+});
+
 app.get("/new-arrivals", async (req, res) => {
   try {
     const newArrivals = await booksCollection.find().sort({ _id: -1 }).limit(6).toArray();

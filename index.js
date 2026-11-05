@@ -51,7 +51,7 @@ app.get("/new-arrivals", async (req, res) => {
 
 app.get("/book/:id", async (req, res) => {
   try {
-    const bookId = req.params;
+    const bookId = req.params.id;
     const book = await booksCollection.findOne({ _id: new ObjectId(bookId) });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
@@ -74,6 +74,20 @@ app.get("/my-books", async (req, res) => {
     res.json(myBooks);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch books" });
+  }
+});
+
+app.get("/my-borrows", async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    const myBorrows = await borrowedBooksCollection
+      .find({ userEmail: email })
+      .toArray();
+
+    res.json(myBorrows);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch borrowed books" });
   }
 });
 
@@ -114,6 +128,20 @@ app.patch("/update-book/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update book' });
+  }
+});
+
+app.delete("/delete-book/:id", async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    const result = await booksCollection.deleteOne({ _id: new ObjectId(bookId) });
+    res.status(201).json({
+      success: true,
+      message: "Book deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete book' });
   }
 });
 

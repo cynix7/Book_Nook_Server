@@ -1,8 +1,8 @@
 import express from 'express';
-import { MongoClient,ObjectId } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import cors from 'cors';
 import 'dotenv/config'
-  
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -19,10 +19,10 @@ export async function connectToMongoDB() {
     console.dir(err);
   }
 }
- const mongoClient = await connectToMongoDB();
- const db = mongoClient.db('book-nook');
- const booksCollection = db.collection('books');
- const borrowedBooksCollection = db.collection('borrowedBooks');
+const mongoClient = await connectToMongoDB();
+const db = mongoClient.db('book-nook');
+const booksCollection = db.collection('books');
+const borrowedBooksCollection = db.collection('borrowedBooks');
 
 
 app.get('/', (req, res) => {
@@ -90,15 +90,30 @@ app.post("/add-book", async (req, res) => {
 
 app.post("/borrow-book", async (req, res) => {
   try {
-    const borrowedBook = req.body;  
+    const borrowedBook = req.body;
     const result = await borrowedBooksCollection.insertOne(borrowedBook);
     res.status(201).json({
-  success: true,
-  message: "Book borrowed successfully",
-});
+      success: true,
+      message: "Book borrowed successfully",
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to borrow book' });
+  }
+});
+
+app.patch("/update-book/:id", async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    const updatedBook = req.body;
+    const result = await booksCollection.updateOne({ _id: new ObjectId(bookId) }, { $set: updatedBook });
+    res.status(201).json({
+      success: true,
+      message: "Book updated successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update book' });
   }
 });
 

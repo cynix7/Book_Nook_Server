@@ -1,5 +1,5 @@
 import express from 'express';
-import { MongoClient } from 'mongodb';
+import { MongoClient,ObjectId } from 'mongodb';
 import cors from 'cors';
 import 'dotenv/config'
   
@@ -22,6 +22,7 @@ export async function connectToMongoDB() {
  const mongoClient = await connectToMongoDB();
  const db = mongoClient.db('book-nook');
  const booksCollection = db.collection('books');
+ const borrowedBooksCollection = db.collection('borrowedBooks');
 
 
 app.get('/', (req, res) => {
@@ -50,8 +51,8 @@ app.get("/new-arrivals", async (req, res) => {
 
 app.get("/book/:id", async (req, res) => {
   try {
-    const bookId = req.params.id;
-    const book = await booksCollection.findOne({ _id: bookId });
+    const bookId = req.params;
+    const book = await booksCollection.findOne({ _id: new ObjectId(bookId) });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
@@ -70,6 +71,20 @@ app.post("/add-book", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to add book' });
+  }
+});
+
+app.post("/borrow-book", async (req, res) => {
+  try {
+    const borrowedBook = req.body;  
+    const result = await borrowedBooksCollection.insertOne(borrowedBook);
+    res.status(201).json({
+  success: true,
+  message: "Book borrowed successfully",
+});
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to borrow book' });
   }
 });
 

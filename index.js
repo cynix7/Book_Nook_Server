@@ -63,6 +63,20 @@ app.get("/book/:id", async (req, res) => {
   }
 });
 
+app.get("/my-books", async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    const myBooks = await booksCollection
+      .find({ userEmail: email })
+      .toArray();
+
+    res.json(myBooks);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch books" });
+  }
+});
+
 app.post("/add-book", async (req, res) => {
   try {
     const newBook = req.body;
